@@ -11,4 +11,5 @@ class User extends Authenticatable {
  protected function casts(): array { return ['email_verified_at'=>'datetime','password'=>'hashed']; }
  public function posts(){return $this->hasMany(FoodPost::class);}
  public function comments(){return $this->hasMany(Comment::class);}
+ public function foodPosts(){return $this->hasMany(\App\Models\FoodPost::class);}
 }

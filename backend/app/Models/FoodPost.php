@@ -7,7 +7,7 @@ class FoodPost extends Model {
  public function user(){return $this->belongsTo(User::class);}
  public function category(){return $this->belongsTo(FoodCategory::class,'category_id');}
  public function comments(){return $this->hasMany(Comment::class);}
- public function likes(){return $this->hasMany(Like::class);}
+ public function likes(){return $this->hasMany(Like::class,'food_post_id');}
  public function bookmarks(){return $this->hasMany(Bookmark::class);}
  public function ratings(){return $this->hasMany(Rating::class);}
 }

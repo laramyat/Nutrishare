@@ -64,122 +64,79 @@ function AuthModal({
   setError,
   close
 }) {
+  const isRegister = auth === 'register';
+  const isForgot = auth === 'forgot';
+  const isReset = auth === 'reset';
+
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <form
-        onSubmit={submitAuth}
-        className="w-full max-w-md rounded-3xl bg-white p-7 shadow-xl"
-      >
+      <form onSubmit={submitAuth} className="w-full max-w-md rounded-3xl bg-white p-7 shadow-xl">
         <div className="mb-5 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 text-xl font-black">
-              <Leaf className="text-leaf-600" />
-              NutriShare
+              <Leaf className="text-leaf-600" /> NutriShare
             </div>
-
             <p className="mt-1 text-sm text-stone-400">
-              {auth === 'login'
-                ? 'Welcome back'
-                : 'Create your community account'}
+              {isForgot ? 'Forgot password' : isReset ? 'Create a new password' : isRegister ? 'Create your community account' : 'Welcome back'}
             </p>
           </div>
-
-          <button type="button" onClick={close}>
-            <X />
-          </button>
+          <button type="button" onClick={close}><X /></button>
         </div>
 
-        {auth === 'register' && (
-          <input
-            required
-            type="text"
-            placeholder="Full name"
+        {isRegister && (
+          <input required type="text" placeholder="Full name"
             className="mb-3 w-full rounded-xl border p-3 text-sm outline-none focus:border-green-600"
             value={authForm.name}
-            onChange={e =>
-              setAuthForm(prev => ({
-                ...prev,
-                name: e.target.value
-              }))
-            }
-          />
+            onChange={e => setAuthForm(prev => ({ ...prev, name: e.target.value }))} />
         )}
 
-        <input
-          required
-          type="email"
-          placeholder="Email address"
+        <input required type="email" placeholder="Email address"
           className="mb-3 w-full rounded-xl border p-3 text-sm outline-none focus:border-green-600"
           value={authForm.email}
-          onChange={e =>
-            setAuthForm(prev => ({
-              ...prev,
-              email: e.target.value
-            }))
-          }
-        />
+          onChange={e => setAuthForm(prev => ({ ...prev, email: e.target.value }))} />
 
-        <input
-          required
-          type="password"
-          placeholder="Password"
-          className="mb-3 w-full rounded-xl border p-3 text-sm outline-none focus:border-green-600"
-          value={authForm.password}
-          onChange={e =>
-            setAuthForm(prev => ({
-              ...prev,
-              password: e.target.value
-            }))
-          }
-        />
-
-        {auth === 'register' && (
-          <input
-            required
-            type="password"
-            placeholder="Confirm password"
+        {isReset && (
+          <input required type="text" placeholder="Reset token"
             className="mb-3 w-full rounded-xl border p-3 text-sm outline-none focus:border-green-600"
-            value={authForm.password_confirmation}
-            onChange={e =>
-              setAuthForm(prev => ({
-                ...prev,
-                password_confirmation: e.target.value
-              }))
-            }
-          />
+            value={authForm.token || ''}
+            onChange={e => setAuthForm(prev => ({ ...prev, token: e.target.value }))} />
         )}
 
-        {error && (
-          <p className="mb-3 text-sm text-rose-600">
-            {error}
+        {!isForgot && (
+          <input required type="password" minLength={8}
+            placeholder={isReset ? 'New password' : 'Password'}
+            className="mb-3 w-full rounded-xl border p-3 text-sm outline-none focus:border-green-600"
+            value={authForm.password}
+            onChange={e => setAuthForm(prev => ({ ...prev, password: e.target.value }))} />
+        )}
+
+        {(isRegister || isReset) && (
+          <input required type="password" minLength={8} placeholder="Confirm password"
+            className="mb-3 w-full rounded-xl border p-3 text-sm outline-none focus:border-green-600"
+            value={authForm.password_confirmation}
+            onChange={e => setAuthForm(prev => ({ ...prev, password_confirmation: e.target.value }))} />
+        )}
+
+        {error && <p className="mb-3 text-sm text-rose-600">{error}</p>}
+
+        <button type="submit" className="w-full rounded-xl bg-leaf-600 py-3 text-sm font-bold text-white hover:bg-leaf-700">
+          {isForgot ? 'Send reset link' : isReset ? 'Reset password' : isRegister ? 'Create account' : 'Sign in'}
+        </button>
+
+        {auth === 'login' && (
+          <p className="mt-3 text-right text-sm">
+            <button type="button" className="font-semibold text-leaf-700"
+              onClick={() => { setAuth('forgot'); setError(''); }}>
+              Forgot password?
+            </button>
           </p>
         )}
 
-        <button
-          type="submit"
-          className="w-full rounded-xl bg-leaf-600 py-3 text-sm font-bold text-white hover:bg-leaf-700"
-        >
-          {auth === 'login' ? 'Sign in' : 'Create account'}
-        </button>
-
         <p className="mt-4 text-center text-sm text-stone-500">
-          {auth === 'login'
-            ? 'New to NutriShare?'
-            : 'Already have an account?'}
-
-          {' '}
-
-          <button
-            type="button"
-            className="font-bold text-leaf-700"
-            onClick={() => {
-              setAuth(prev =>
-                prev === 'login' ? 'register' : 'login'
-              );
-              setError('');
-            }}
-          >
-            {auth === 'login' ? 'Register' : 'Sign in'}
+          {isForgot || isReset ? 'Remember your password?' : isRegister ? 'Already have an account?' : 'New to NutriShare?'}{' '}
+          <button type="button" className="font-bold text-leaf-700"
+            onClick={() => { setAuth(isForgot || isReset || isRegister ? 'login' : 'register'); setError(''); }}>
+            {isForgot || isReset || isRegister ? 'Sign in' : 'Register'}
           </button>
         </p>
       </form>
@@ -796,6 +753,8 @@ function AdminPanel({
   setCategories,
   RecipeCardComponent
 }) {
+  const [userSearch, setUserSearch] = useState('');
+
   if (page === 'dashboard') {
     return (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -826,24 +785,111 @@ function AdminPanel({
   }
 
   if (page === 'users') {
+    const filteredUsers = users.filter(u =>
+      `${u.name || ''} ${u.email || ''} ${u.role || ''}`.toLowerCase().includes(userSearch.toLowerCase())
+    );
+
+    const toggleBan = async u => {
+      const currentlyBanned = Boolean(u.is_banned);
+      if (!window.confirm(`${currentlyBanned ? 'Unban' : 'Ban'} ${u.name}?`)) return;
+      try {
+        await api.patch(`/admin/users/${u.id}/ban`, { is_banned: !currentlyBanned });
+        flash(currentlyBanned ? 'User unbanned' : 'User banned');
+        adminLoad();
+      } catch (e) {
+        flash(e.response?.data?.message || 'Could not update user status. Check backend API route.');
+      }
+    };
+
+    const deleteUser = async u => {
+      if (!window.confirm(`Delete user ${u.name}? This cannot be undone.`)) return;
+      try {
+        await api.delete(`/admin/users/${u.id}`);
+        flash('User deleted');
+        adminLoad();
+      } catch (e) {
+        flash(e.response?.data?.message || 'Could not delete user. Check backend API route.');
+      }
+    };
+
+    const changeRole = async (u, role) => {
+      try {
+        await api.patch(`/admin/users/${u.id}`, { role });
+        flash('User role updated');
+        adminLoad();
+      } catch (e) {
+        flash(e.response?.data?.message || 'Could not update user role. Check backend API route.');
+      }
+    };
+
     return (
       <div className="rounded-2xl bg-white p-5">
-        <h2 className="mb-4 font-bold">Registered users</h2>
-
-        {users.map(u => (
-          <div
-            key={u.id}
-            className="flex flex-wrap justify-between gap-2 border-b py-3 text-sm"
-          >
-            <span>
-              {u.name} · {u.email}
-            </span>
-
-            <span className="font-semibold text-leaf-700">
-              {u.role}
-            </span>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-bold">User management</h2>
+            <p className="text-xs text-stone-400">{users.length} registered users</p>
           </div>
-        ))}
+          <input value={userSearch} onChange={e => setUserSearch(e.target.value)}
+            placeholder="Search name, email or role..."
+            className="w-full max-w-sm rounded-xl border px-3 py-2 text-sm outline-none focus:border-green-600" />
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px] text-left text-sm">
+            <thead className="bg-stone-50 text-stone-500">
+              <tr>
+                <th className="p-3">Member</th>
+                <th className="p-3">Role</th>
+                <th className="p-3">Status</th>
+                <th className="p-3">Joined</th>
+                <th className="p-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map(u => (
+                <tr key={u.id} className="border-b">
+                  <td className="p-3">
+                    <div className="font-semibold">{u.name}</div>
+                    <div className="text-xs text-stone-400">{u.email}</div>
+                  </td>
+                  <td className="p-3">
+                    <select value={u.role || 'member'} onChange={e => changeRole(u, e.target.value)}
+                      disabled={u.role === 'admin'}
+                      className="rounded-lg border p-2 text-xs">
+                      <option value="member">Member</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </td>
+                  <td className="p-3">
+                    <span className={cx('rounded-full px-2 py-1 text-xs font-bold', u.is_banned ? 'bg-rose-100 text-rose-700' : 'bg-green-100 text-green-700')}>
+                      {u.is_banned ? 'Banned' : 'Active'}
+                    </span>
+                  </td>
+                  <td className="p-3 text-xs text-stone-500">
+                    {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                  </td>
+                  <td className="p-3">
+                    <div className="flex gap-2">
+                      {u.role !== 'admin' && (
+                        <button onClick={() => toggleBan(u)}
+                          className="rounded-lg border px-3 py-2 text-xs font-semibold text-amber-700">
+                          {u.is_banned ? 'Unban' : 'Ban'}
+                        </button>
+                      )}
+                      {u.role !== 'admin' && (
+                        <button onClick={() => deleteUser(u)}
+                          className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700">
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {filteredUsers.length === 0 && <p className="py-8 text-center text-sm text-stone-400">No users found.</p>}
       </div>
     );
   }
@@ -985,17 +1031,31 @@ export default function App() {
   // AUTH FORM
   const [auth, setAuth] = useState('login');
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const email = params.get('email');
+    if (token) {
+      setAuth('reset');
+      setModal('auth');
+      setAuthForm(prev => ({ ...prev, token, email: email || prev.email }));
+    }
+  }, []);
+
   const [authForm, setAuthForm] = useState({
     name: '',
     email: '',
     password: '',
-    password_confirmation: ''
+    password_confirmation: '',
+    token: ''
   });
 
   const [error, setError] = useState('');
 
   // NOTIFICATION
   const [notice, setNotice] = useState('');
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const isAdmin = user?.role === 'admin';
 
@@ -1089,30 +1149,49 @@ export default function App() {
   // LOGIN AND REGISTER
   // ========================================
 
-const submitAuth = async (e) => {
-  e.preventDefault();
-  setError('');
+  const submitAuth = async e => {
+    e.preventDefault();
+    setError('');
 
-  try {
-    const endpoint = auth === 'login' ? '/login' : '/register';
+    try {
+      if (auth === 'forgot') {
+        const r = await api.post('/forgot-password', { email: authForm.email });
+        setError(r.data.message || r.data.status || 'If the email is registered, a password reset link will be sent.');
+        return;
+      }
 
-    const r = await api.post(endpoint, authForm);
+      if (auth === 'reset') {
+        await api.post('/reset-password', {
+          email: authForm.email,
+          token: authForm.token,
+          password: authForm.password,
+          password_confirmation: authForm.password_confirmation
+        });
+        setAuth('login');
+        setAuthForm({ name: '', email: authForm.email, password: '', password_confirmation: '', token: '' });
+        setError('Password reset successfully. Please sign in.');
+        return;
+      }
 
-    localStorage.setItem('nutri_token', r.data.token);
-    localStorage.setItem('nutri_user', JSON.stringify(r.data.user));
+      const endpoint = auth === 'login' ? '/login' : '/register';
+      const r = await api.post(endpoint, authForm);
 
-    setUser(r.data.user);
-    setPage(r.data.user.role === 'admin' ? 'dashboard' : 'home');
-    setModal('');
-  } catch (e) {
-    setError(
-      e.response?.data?.message ||
-      Object.values(e.response?.data?.errors || {}).flat().join(' ') ||
-      'Unable to sign in. Check your details.'
-    );
-  }
-};
-
+      localStorage.setItem('nutri_token', r.data.token);
+      localStorage.setItem('nutri_user', JSON.stringify(r.data.user));
+      setUser(r.data.user);
+      setPage(r.data.user.role === 'admin' ? 'dashboard' : 'home');
+      setModal('');
+      setAuthForm({ name: '', email: '', password: '', password_confirmation: '', token: '' });
+      flash(auth === 'login' ? 'Welcome back!' : 'Account created successfully!');
+    } catch (e) {
+      setError(
+        e.response?.data?.message ||
+        e.response?.data?.status ||
+        Object.values(e.response?.data?.errors || {}).flat().join(' ') ||
+        'Request failed. Please check your details and backend API.'
+      );
+    }
+  };
 
   // ========================================
   // LOAD SAVED RECIPES
@@ -1159,7 +1238,6 @@ const submitAuth = async (e) => {
           ? 'Recipe saved'
           : 'Removed from saved recipes'
       );
-
     } catch {
       flash('Could not update bookmark');
     }
@@ -1359,6 +1437,41 @@ const submitAuth = async (e) => {
   }, [search, category]);
 
   // ========================================
+  // MEMBER NOTIFICATIONS
+  // Backend should expose GET /notifications and PATCH /notifications/{id}/read
+  // ========================================
+
+  const loadNotifications = async () => {
+    if (!user) return;
+    try {
+      const r = await api.get('/notifications');
+      setNotifications(r.data.data || r.data.notifications || r.data || []);
+    } catch (e) {
+      // Keep the app usable if notification API has not been added yet.
+      console.info('Notifications API is not available yet.');
+    }
+  };
+
+  const markNotificationRead = async notification => {
+    try {
+      await api.patch(`/notifications/${notification.id}/read`);
+      setNotifications(prev => prev.map(n =>
+        n.id === notification.id ? { ...n, read_at: n.read_at || new Date().toISOString(), read: true } : n
+      ));
+    } catch (e) {
+      flash('Could not mark notification as read');
+    }
+  };
+
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      return;
+    }
+    loadNotifications();
+  }, [user]);
+
+  // ========================================
   // ADMIN DATA
   // ========================================
 
@@ -1500,7 +1613,7 @@ const submitAuth = async (e) => {
               onClick={() => openCreate()}
               className="mt-5 rounded-xl bg-leaf-600 px-5 py-3 text-sm font-bold text-white"
             >
-              Share your recipe +
+              Add your recipe +
             </button>
 
           </div>
@@ -1594,7 +1707,7 @@ const submitAuth = async (e) => {
             onClick={() => openCreate()}
             className="rounded-xl bg-leaf-600 px-4 py-3 text-sm font-bold text-white"
           >
-            + Share recipe
+            + Add recipe
           </button>
 
         </div>
@@ -1690,6 +1803,33 @@ const submitAuth = async (e) => {
 
               {user ? (
                 <>
+                  <div className="relative">
+                    <button onClick={() => { setShowNotifications(v => !v); loadNotifications(); }}
+                      className="relative rounded-full p-2 hover:bg-stone-100" title="Notifications">
+                      <Bell size={19} />
+                      {notifications.some(n => !n.read_at && !n.read) && (
+                        <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-rose-500" />
+                      )}
+                    </button>
+                    {showNotifications && (
+                      <div className="absolute right-0 top-12 z-50 w-80 max-w-[90vw] rounded-2xl border bg-white p-3 shadow-xl">
+                        <div className="mb-2 flex items-center justify-between">
+                          <b className="text-sm">Notifications</b>
+                          <button onClick={() => setShowNotifications(false)}><X size={16} /></button>
+                        </div>
+                        <div className="max-h-72 overflow-y-auto">
+                          {notifications.length ? notifications.map(n => (
+                            <button key={n.id} onClick={() => markNotificationRead(n)}
+                              className={cx('block w-full rounded-xl p-3 text-left text-sm hover:bg-stone-50', (!n.read_at && !n.read) && 'bg-green-50')}>
+                              <span className="block font-semibold">{n.title || n.data?.title || 'NutriShare update'}</span>
+                              <span className="mt-1 block text-xs text-stone-500">{n.message || n.data?.message || n.data?.body || 'You have a new notification.'}</span>
+                              <span className="mt-1 block text-[10px] text-stone-400">{n.created_at ? new Date(n.created_at).toLocaleString() : ''}</span>
+                            </button>
+                          )) : <p className="p-4 text-center text-xs text-stone-400">No notifications yet.</p>}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <span className="grid h-9 w-9 place-items-center rounded-full bg-leaf-100 text-sm font-bold text-leaf-700">
                     {user.name?.slice(0, 1)}
                   </span>
@@ -1755,7 +1895,7 @@ const submitAuth = async (e) => {
           className="fixed bottom-6 right-6 flex items-center gap-2 rounded-full bg-leaf-600 px-5 py-4 text-sm font-bold text-white shadow-xl"
         >
           <PlusCircle />
-          Share recipe
+          Add recipe
         </button>
       )}
 

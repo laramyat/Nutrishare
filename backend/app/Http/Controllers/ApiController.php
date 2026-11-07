@@ -14,7 +14,9 @@ use App\Models\{
 };
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 
 class ApiController extends Controller
 {
@@ -394,15 +396,17 @@ class ApiController extends Controller
     public function updateUser(Request $request, User $user)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:100',
+            'name' => 'sometimes|required|string|max:100',
             'email' => [
-                'required',
-                'email',
+                'sometimes', 'required', 'email',
                 Rule::unique('users', 'email')->ignore($user->id)
             ],
-            'role' => 'required|in:admin,member'
+            'role' => 'sometimes|required|in:admin,member'
         ]);
 
+        if ($request->user()->id === $user->id && isset($data['role']) && $data['role'] !== 'admin') {
+            return response()->json(['message' => 'You cannot remove your own admin role.'], 403);
+        }
         $user->update($data);
 
         return response()->json([
@@ -501,4 +505,58 @@ class ApiController extends Controller
             'message' => 'Category deleted'
         ]);
     }
+
+    // FORGOT PASSWORD: sends Laravel password reset notification
+    public function forgotPassword(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+        $status = Password::sendResetLink($request->only('email'));
+
+        if ($status !== Password::RESET_LINK_SENT) {
+            return response()->json(['message' => __($status)], 422);
+        }
+
+        return response()->json(['message' => __($status)]);
+    }
+
+    // RESET PASSWORD
+    public function resetPassword(Request $request)
+    {
+        $data = $request->validate([
+            'token' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $status = Password::reset($data, function ($user, $password) {
+            $user->forceFill(['password' => Hash::make($password)])->save();
+            $user->tokens()->delete();
+        });
+
+        if ($status !== Password::PASSWORD_RESET) {
+            return response()->json(['message' => __($status)], 422);
+        }
+
+        return response()->json(['message' => 'Password reset successfully. Please sign in.']);
+    }
+
+    // MEMBER NOTIFICATIONS
+    public function notifications(Request $request)
+    {
+        return $request->user()->notifications()->latest()->paginate(20);
+    }
+
+    public function markNotificationRead(Request $request, string $id)
+    {
+        $notification = $request->user()->notifications()->whereKey($id)->firstOrFail();
+        $notification->markAsRead();
+        return response()->json(['message' => 'Notification marked as read']);
+    }
+
+    public function markAllNotificationsRead(Request $request)
+    {
+        $request->user()->unreadNotifications->markAsRead();
+        return response()->json(['message' => 'All notifications marked as read']);
+    }
+
 }

@@ -12,18 +12,10 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'role',
-        'avatar',
-        'is_banned',
+        'name', 'email', 'password', 'role', 'avatar', 'bio', 'is_banned'
     ];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ['password', 'remember_token'];
 
     protected function casts(): array
     {
@@ -34,27 +26,9 @@ class User extends Authenticatable
         ];
     }
 
-    // User Food Posts
-    public function posts()
-    {
-        return $this->hasMany(FoodPost::class);
-    }
-
-    // User Comments
-    public function comments()
-    {
-        return $this->hasMany(Comment::class);
-    }
-
-    // Check Admin
-    public function isAdmin(): bool
-    {
-        return $this->role === 'admin';
-    }
-
-    // Check Banned User
-    public function isBanned(): bool
-    {
-        return (bool) $this->is_banned;
-    }
+    public function posts() { return $this->hasMany(FoodPost::class); }
+    public function comments() { return $this->hasMany(Comment::class); }
+    public function likes() { return $this->hasMany(Like::class); }
+    public function bookmarks() { return $this->hasMany(Bookmark::class); }
+    public function ratings() { return $this->hasMany(Rating::class); }
 }
